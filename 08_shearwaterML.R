@@ -44,7 +44,7 @@ dfMeta = read.csv('dataExternal/filelist.csv', header=T, stringsAsFactors = F)
 str(dfMeta)
 
 #### set working directory to appropriate location with bam files
-setwd('results/remote/bams/')
+setwd('results/bams/')
 csFiles = list.files('.', pattern = '*sortc.bam$')
 ## match the file names to sample ids in metadata table
 f = gsub('_q30_.+', '.bam', csFiles)
@@ -75,15 +75,15 @@ seqlevelsStyle(oBSgenome) = 'NCBI'
 #counts <- loadAllData(files, regions, q=10)
 
 ### error checks if the files have problems or not
-lTry = lapply(dfMeta$fname_sorted_rd,  function(x){
-  tryCatch(loadAllData(x, oGRgenes[1], q=25), error=function(e) return(NULL))  
-})
+# lTry = lapply(dfMeta$fname_sorted_rd,  function(x){
+#   tryCatch(loadAllData(x, oGRgenes[1], q=25), error=function(e) return(NULL))  
+# })
+# 
+# table(sapply(lTry, is.null))
+# ## if all ok continue
 
-table(sapply(lTry, is.null))
-## if all ok continue
-
-tumourbams = dfMeta$fname_sorted[args[1]]
-normalbams = dfMeta$fname_sorted[-c(args[1])]
+tumourbams = dfMeta$fname_sorted_rd[args[1]]
+normalbams = dfMeta$fname_sorted_rd[-c(args[1])]
 cvTumSampleName = as.character(dfMeta$title[args[1]])
 min_totest = 2 # Minimum number of mutant reads in the tumour samples to test a site
 
@@ -234,10 +234,11 @@ myShearWaterML = function(iGeneIndex){
   mutations_allsamples$p.adj = p.adjust(mutations_allsamples$pval, method = 'BH')
   mutations_allsamples$ENTREZID = regions$gene_id
   mutations_allsamples$SYMBOL = regions$SYMBOL
+  gc(full = T)
   return(mutations_allsamples)
 }
 
-ldfResults = lapply(seq_along(1:2), function(iRegion){
+ldfResults = lapply(seq_along(oGRgenes), function(iRegion){
   tryCatch(myShearWaterML(iRegion), error=function(e) return(NA))
 })
 
@@ -251,10 +252,10 @@ dfResults = do.call(rbind, ldfResults)
 dim(dfResults)
 table(complete.cases(dfResults))
 dfResults = dfResults[complete.cases(dfResults), ]
-table(dfResults$p.adj < 0.01)
-dfResults.adj = dfResults[dfResults$p.adj < 0.01, ]
-n = (paste0('results/', cvTumSampleName, '.csv'))
-setwd(gcswd)
+# table(dfResults$p.adj < 0.01)
+# dfResults.adj = dfResults[dfResults$p.adj < 0.01, ]
+n = (paste0('../../results/', cvTumSampleName, '.csv'))
+#setwd(gcswd)
 write.csv(dfResults, file=n)
 ######
 
