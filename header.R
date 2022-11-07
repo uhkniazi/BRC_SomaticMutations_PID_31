@@ -8,7 +8,7 @@
 g_pid = 31
 g_did = 54
 gcswd = getwd()
-#gcRemoteDir = "/run/user/1000/gvfs/sftp:host=login.rosalind.kcl.ac.uk,user=k1625253/users/k1625253/scratch/old-scratch_rosalind-legacy-import_2020-01-28/Data/"
+gcRemoteDir = "/run/user/1000/gvfs/sftp:host=hpc.create.kcl.ac.uk,user=k1625253/users/k1625253/Projects/somaticMutationsScratch/BRC_SomaticMutations_PID_31/"
 
 p.old = par()
 
