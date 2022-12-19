@@ -37,12 +37,19 @@ oVRloadCSV = function(csFile, p.cut=0.01){
   return(v)
 }
 
-i = which(dfSample$group1 == 'A005')
-n = paste0(dfSample$title[i], '.csv')
-setwd('dataExternal/sample/')
+#i = which(dfSample$group1 == 'A005')
+n = paste0(dfSample$title, '.csv')
+setwd('dataExternal/remote/results/')
+## check if files exist
+l = list.files('.', '*.csv$')
+table(n %in% l)
+## load all the data
 l = lapply(n, oVRloadCSV)
 oVRLSample = VRangesList(l)
-names(oVRLSample) = n
+names(oVRLSample) = dfSample$title
+rm(l)
+
+cvSamples = dfSample$group1
 
 ## identify common variants across samples, to be used for Germline filtering
 cvCommonSNPs = unique(do.call(c, lapply(oVRLSample, names)))
@@ -52,8 +59,9 @@ for (i in 1:ncol(mCommonSNPs)){
 }
 rownames(mCommonSNPs) = cvCommonSNPs
 colnames(mCommonSNPs) = names(oVRLSample)
-i = rowSums(mCommonSNPs)
 
+
+## process each sample group based on sample id
 oVRoverlaps = function(oVR, iCounts){
   m = match(names(oVR), names(iCounts))
   stopifnot(identical(names(oVR), names(iCounts)[m]))
@@ -61,9 +69,26 @@ oVRoverlaps = function(oVR, iCounts){
   return(oVR)
 }
 
-l = lapply(oVRLSample, oVRoverlaps, i)
-oVRLSample = VRangesList(l)
+cvSamples.u = unique(cvSamples)
 
+for (s in seq_along(cvSamples.u)){
+  w = which(cvSamples == cvSamples.u[s])
+  if (length(w) <= 1) next;
+  i = rowSums(mCommonSNPs[,w])
+  l = lapply(oVRLSample[w], oVRoverlaps, i)
+  oVRLSample[w] = VRangesList(l)
+}
+
+lResults = list(vr=oVRLSample, meta=dfSample)
+save(lResults, file='lResults_with_VRanges_overlaps.rds')
+
+## write csv files
+n = paste0(names(lResults$vr), '.csv')
+setwd('results/csv/')
+sapply(seq_along(n), function(i){
+  d = mcols(lResults$vr[[i]])
+  write.csv(d, file=n[i])
+})
 
 # 
 # m = match(names(v), names(i))
@@ -71,7 +96,3 @@ oVRLSample = VRangesList(l)
 # identical(names(v), names(i)[m])
 # v$overlaps = i[m]
 
-
-
-
-oVRtemplate = reduce(unlist(oVRLSample))
