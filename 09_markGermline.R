@@ -90,6 +90,16 @@ sapply(seq_along(n), function(i){
   write.csv(d, file=n[i])
 })
 
+## figures for overlaps by subject
+oVRall = unlist(oVRLSample)
+dfOverlaps = data.frame(Sample=oVRall$sampleID, Overlaps=oVRall$overlaps) 
+dfOverlaps$Subject = factor(gsub('_\\d+$', '', as.character(dfOverlaps$Sample)))
+xtabs(~ Subject + Overlaps, data=dfOverlaps)
+
+library(lattice)
+
+histogram(~ Overlaps | Subject, data=dfOverlaps[dfOverlaps$Subject != 'A004',], scales=list(relation='free'))
+
 # 
 # m = match(names(v), names(i))
 # # sanity check
